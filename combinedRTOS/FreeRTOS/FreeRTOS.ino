@@ -1,5 +1,12 @@
 // IO pins setup
 //Queue handle
+
+// ===============Libraries===============//
+#include <Ticker.h>
+#include <B31DGMonitor.h>
+
+
+B31DGCyclicExecutiveMonitor monitor; // Creating object for monitor
 static QueueHandle_t qh;
 // ===============Button/LED===============//
 
@@ -86,6 +93,7 @@ void task1(void *parameters)
   for(;;)
   {
     vTaskDelayUntil( &xLastWakeTime, Period1 );
+    monitor.jobStarted(1);
 
     digitalWrite(outT1,HIGH);
     timeNow = micros();        // get the current time 
@@ -115,6 +123,7 @@ void task1(void *parameters)
         done = 1;    // done so that we can get out of this while loop
       }
     }
+    monitor.jobEnded(1);
   }
 
 }
@@ -130,9 +139,10 @@ void task2(void *parameters)
 
   for(;;)
   {
+
     Data task2f;
     vTaskDelayUntil( &xLastWakeTime, Period2 );
-
+    monitor.jobStarted(2);
     xSemaphoreTake(SMF,portMAX_DELAY);
 
     stateT2 = digitalRead(inT2);                     // checks the current state of signal ( high or low )
@@ -156,7 +166,7 @@ void task2(void *parameters)
     {
       task2f.freq1 = freqT2;
     }
-    
+    monitor.jobEnded(2);
     xSemaphoreGive(SMF);
   }
 }
@@ -173,7 +183,7 @@ void task3(void *parameters)
   for(;;)
   {
     vTaskDelayUntil( &xLastWakeTime, Period3 );
-
+    monitor.jobStarted(3);
     xSemaphoreTake(SMF,portMAX_DELAY);
 
     stateT3 = digitalRead(inT3);                   // checks the current state of signal ( high or low )
@@ -197,6 +207,7 @@ void task3(void *parameters)
     {
       task3f.freq2 = freqT3;
     }
+     monitor.jobEnded(3);
     xSemaphoreGive(SMF);
   }
 }
@@ -212,7 +223,7 @@ void task4(void *parameters)
   for(;;)
   {
     vTaskDelayUntil( &xLastWakeTime, Period4 );
-
+    monitor.jobStarted(4);
     if (count < 4)                        // adds the value to the next array as counter goes up
     {                                      // as long as the last array is not filled
       potVal[count] = analogRead(potPin);
@@ -243,6 +254,7 @@ void task4(void *parameters)
     }
     toVal = 0;                           // resets the value of total sum to 0
   }
+  monitor.jobEnded(4);
 }
 
 void task5(void *parameters)
@@ -256,6 +268,7 @@ void task5(void *parameters)
   for(;;)
   {
     vTaskDelayUntil( &xLastWakeTime, Period5 );
+    monitor.jobStarted(5);
     xSemaphoreTake(SMF,portMAX_DELAY);
 
     x = map(freqT2, 333, 1000, 0, 99);
@@ -268,7 +281,7 @@ void task5(void *parameters)
     Serial.print(X);
     Serial.print(",");
     Serial.println(Y);
-
+        monitor.jobEnded(5);
   }
 }
 
@@ -396,4 +409,6 @@ void setup()
 
   rc = xTaskCreatePinnedToCore(ledOut,"LED",1024,NULL,1,NULL,1);
   assert(rc == pdPASS);
+
+  monitor.startMonitoring();    
 }
