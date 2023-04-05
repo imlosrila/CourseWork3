@@ -332,6 +332,7 @@ void loop()
 
 void setup()
 {
+  BaseType_t rc;
   //creating a que
   // qh = xQueueCreate(5,sizeof(uint32_t));
   delay(2000);          // Allow USB to connect
@@ -378,10 +379,21 @@ void setup()
     1
   );
   
-  xTaskCreatePinnedToCore(task2,"Task2",1024,NULL,3,NULL,1);
-  xTaskCreatePinnedToCore(task3,"Task3",1024,NULL,2,NULL,1);
-  xTaskCreatePinnedToCore(task4,"Task4",1024,NULL,1,NULL,1);
-  xTaskCreatePinnedToCore(task5,"Task5",1024,NULL,1,NULL,1);
-  xTaskCreatePinnedToCore(button,"CheckButton",1024,NULL,1,NULL,1);
-  xTaskCreatePinnedToCore(ledOut,"LED",1024,NULL,1,NULL,1);
+  rc = xTaskCreatePinnedToCore(task2,"Task2",1024,NULL,3,NULL,1);
+  assert(rc == pdPASS);
+
+  rc = xTaskCreatePinnedToCore(task3,"Task3",1024,NULL,2,NULL,1);
+  assert(rc == pdPASS);
+
+  rc = xTaskCreatePinnedToCore(task4,"Task4",1024,NULL,1,NULL,1);
+  assert(rc == pdPASS);
+
+  rc = xTaskCreatePinnedToCore(task5,"Task5",1024,NULL,1,NULL,1);
+  assert(rc == pdPASS);
+
+  rc = xTaskCreatePinnedToCore(button,"CheckButton",1024,NULL,1,NULL,1);
+  assert(rc == pdPASS);
+
+  rc = xTaskCreatePinnedToCore(ledOut,"LED",1024,NULL,1,NULL,1);
+  assert(rc == pdPASS);
 }
