@@ -1,58 +1,91 @@
-// debounce.ino 
-// MIT License (see file LICENSE)
-
 // LED is active high
 #define GPIO_LED    12 
 #define GPIO_BUTTON 25
 
-static QueueHandle_t queue;
+//Setup to create task
 
-//
-// Button Debouncing task:
-//
-static void debounce_task(void *argp) {
-  uint32_t level, state = 0, last = 0xFFFFFFFF;
-  uint32_t mask = 0x7FFFFFFF;
-  bool event;
-  
-  for (;;) {
-    level = !!digitalRead(GPIO_BUTTON);
-    state = (state << 1) | level;
-    if ( (state & mask) == mask
-      || (state & mask) == 0 ) {
-      if ( level != last ) {
-        event = !!level;
-        if ( xQueueSendToBack(queue,&event,1) == pdPASS )
-          last = level;
-      }
-    }
-    taskYIELD();
+typedef struct 
+{
+  // data
+  int freq1;
+  int freq2;
+}Data;
+
+
+void setup()
+{
+  xTaskCreate(
+    task1, // Function name
+    "Task1", // Task name
+    1000, // Stack size
+    1, // Priority
+    NULL // Task Handle
+  );
+  xTaskCreate(task2,"Task2",1000,1,NULL);
+  xTaskCreate(task3,"Task3",1000,1,NULL);
+  xTaskCreate(task4,"Task4",1000,1,NULL);
+  xTaskCreate(task5,"Task5",1000,1,NULL);
+  xTaskCreate(button,"CheckButton",1000,1,NULL);
+  xTaskCreate(led,"Task1",1000,1,NULL);
+}
+
+void loop()
+{
+
+}
+
+void task1(void *parameters)
+{
+  for(;;)
+  {
+    // Task1
   }
 }
 
-//
-// LED queue receiving task
-//
-static void led_task(void *argp) {
-  BaseType_t s;
-  bool event, led = false;
-  
-  // Light LED initially
-  digitalWrite(GPIO_LED,led);
-
-  for (;;) {
-    s = xQueueReceive(
-      queue,
-      &event,
-      portMAX_DELAY
-    );
-    assert(s == pdPASS);
-    if ( event ) {
-      // Button press:
-      // Toggle LED
-      led ^= true;
-      digitalWrite(GPIO_LED,led);
-    }
+void task2(void *parameters)
+{
+  for(;;)
+  {
+    // Task2
   }
 }
 
+void task3(void *parameters)
+{
+  for(;;)
+  {
+    // Task3
+  }
+}
+
+void task4(void *parameters)
+{
+  for(;;)
+  {
+    // Task4
+  }
+}
+
+void task5(void *parameters)
+{
+  for(;;)
+  {
+    // Task5
+  }
+}
+
+void button(void *parameters)
+{
+  for(;;)
+  {
+    // Check for button
+  }
+}
+
+void led(void *parameters)
+{
+  for(;;)
+  {
+    // LED light up
+  }
+}
