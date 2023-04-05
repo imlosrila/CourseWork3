@@ -277,9 +277,16 @@ void button(void *parameters)
   uint32_t level, state = 0, last = 0xFFFFFFFF;
   uint32_t mask = 0x7FFFFFFF;
   bool event;
+
+  TickType_t xLastWakeTime;
+  const TickType_t PeriodButton = 2;
+
+  // Initialise the xLastWakeTime variable with the current time.
+  xLastWakeTime = xTaskGetTickCount();
   
   for (;;) 
   {
+    vTaskDelayUntil( &xLastWakeTime, PeriodButton );
     level = !!digitalRead(buttonPin);
     state = (state << 1) | level;
     if ( (state & mask) == mask|| (state & mask) == 0 )
@@ -298,7 +305,11 @@ void button(void *parameters)
 void ledOut(void *parameters)
 {
 
-  
+  TickType_t xLastWakeTime;
+  const TickType_t PeriodLed = 2;
+
+  // Initialise the xLastWakeTime variable with the current time.
+  xLastWakeTime = xTaskGetTickCount();
   // LED light up
   BaseType_t s;
   bool event, ledState = false;
@@ -308,6 +319,7 @@ void ledOut(void *parameters)
 
   for (;;) 
   {
+      vTaskDelayUntil( &xLastWakeTime, PeriodLed );
     s = xQueueReceive(
       qh,
       &event,
