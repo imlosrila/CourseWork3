@@ -69,18 +69,21 @@ typedef struct
   int freq2;
 }Data;
 
+SemaphoreHandle_t SMF; //Semaphore handle
+
+
 
 void task1(void *parameters)
 {
   TickType_t xLastWakeTime;
-  const TickType_t xFrequency = 10;
+  const TickType_t Period1 = 4;
 
   // Initialise the xLastWakeTime variable with the current time.
   xLastWakeTime = xTaskGetTickCount();
 
   for(;;)
   {
-    vTaskDelayUntil( &xLastWakeTime, xFrequency );
+    vTaskDelayUntil( &xLastWakeTime, Period1 );
 
     digitalWrite(outT1,HIGH);
     timeNow = micros();        // get the current time 
@@ -117,14 +120,16 @@ void task1(void *parameters)
 void task2(void *parameters)
 {
   TickType_t xLastWakeTime;
-  const TickType_t xFrequency = 100;
+  const TickType_t Period2 = 20;
 
   // Initialise the xLastWakeTime variable with the current time.
   xLastWakeTime = xTaskGetTickCount();
 
   for(;;)
   {
-    vTaskDelayUntil( &xLastWakeTime, xFrequency );
+    vTaskDelayUntil( &xLastWakeTime, Period2 );
+
+    xSemaphoreTake(SMF,portMAX_DELAY);
 
     stateT2 = digitalRead(inT2);                     // checks the current state of signal ( high or low )
 
@@ -142,21 +147,24 @@ void task2(void *parameters)
     {
       freqT2 = 1000;
     }
-  
+    
+    xSemaphoreGive(SMF);
   }
 }
 
 void task3(void *parameters)
 {
   TickType_t xLastWakeTime;
-  const TickType_t xFrequency = 10;
+  const TickType_t Period3 = 8;
 
   // Initialise the xLastWakeTime variable with the current time.
   xLastWakeTime = xTaskGetTickCount();
 
   for(;;)
   {
-    vTaskDelayUntil( &xLastWakeTime, xFrequency );
+    vTaskDelayUntil( &xLastWakeTime, Period3 );
+
+    xSemaphoreTake(SMF,portMAX_DELAY);
 
     stateT3 = digitalRead(inT3);                   // checks the current state of signal ( high or low )
 
@@ -174,21 +182,21 @@ void task3(void *parameters)
     {
      freqT3 = 1000;
     }
-
+    xSemaphoreGive(SMF);
   }
 }
 
 void task4(void *parameters)
 {
   TickType_t xLastWakeTime;
-  const TickType_t xFrequency = 100;
+  const TickType_t Period4 = 100;
 
   // Initialise the xLastWakeTime variable with the current time.
   xLastWakeTime = xTaskGetTickCount();
 
   for(;;)
   {
-    vTaskDelayUntil( &xLastWakeTime, xFrequency );
+    vTaskDelayUntil( &xLastWakeTime, Period4 );
 
     if (count < 4)                        // adds the value to the next array as counter goes up
     {                                      // as long as the last array is not filled
@@ -225,17 +233,18 @@ void task4(void *parameters)
 void task5(void *parameters)
 {
   TickType_t xLastWakeTime;
-  const TickType_t xFrequency = 100;
+  const TickType_t Period5 = 100;
 
   // Initialise the xLastWakeTime variable with the current time.
   xLastWakeTime = xTaskGetTickCount();
 
   for(;;)
   {
-    vTaskDelayUntil( &xLastWakeTime, xFrequency );
-
+    vTaskDelayUntil( &xLastWakeTime, Period5 );
+    xSemaphoreTake(SMF,portMAX_DELAY);
     x = map(freqT2, 333, 1000, 0, 99);
     y = map(freqT3, 500, 1000, 0, 99);
+    xSemaphoreGive(SMF);
     Serial.print(x);
     Serial.print(",");
     Serial.println(y);
@@ -287,6 +296,7 @@ void loop()
 
 void setup()
 {
+  SMF = xSemaphoreCreateMutex();
   //Pins setup
 
   Serial.begin(9600);
@@ -322,7 +332,7 @@ void setup()
     1
   );
   
-  xTaskCreatePinnedToCore(task2,"Task2",1024,NULL,2,NULL,1);
+  xTaskCreatePinnedToCore(task2,"Task2",1024,NULL,3,NULL,1);
   xTaskCreatePinnedToCore(task3,"Task3",1024,NULL,2,NULL,1);
   xTaskCreatePinnedToCore(task4,"Task4",1024,NULL,1,NULL,1);
   xTaskCreatePinnedToCore(task5,"Task5",1024,NULL,1,NULL,1);
