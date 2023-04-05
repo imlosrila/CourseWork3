@@ -1,4 +1,6 @@
 // IO pins setup
+//Queue handle
+static QueueHandle_t qh;
 // ===============Button/LED===============//
 
 #define buttonPin 33
@@ -119,6 +121,7 @@ void task1(void *parameters)
 
 void task2(void *parameters)
 {
+  
   TickType_t xLastWakeTime;
   const TickType_t Period2 = 20;
 
@@ -127,6 +130,7 @@ void task2(void *parameters)
 
   for(;;)
   {
+    Data task2f;
     vTaskDelayUntil( &xLastWakeTime, Period2 );
 
     xSemaphoreTake(SMF,portMAX_DELAY);
@@ -140,12 +144,17 @@ void task2(void *parameters)
     if (freqT2 < 333)
     {
       // condition for too high or low which lets it to 0
-      freqT2 = 333;
+       task2f.freq1 = 333;
     }
 
-    if (freqT2 > 1000)
+    else if (freqT2 > 1000)
     {
-      freqT2 = 1000;
+      task2f.freq1 = 1000;
+    }
+
+    else
+    {
+      task2f.freq1 = freqT2;
     }
     
     xSemaphoreGive(SMF);
@@ -154,6 +163,7 @@ void task2(void *parameters)
 
 void task3(void *parameters)
 {
+  Data task3f;
   TickType_t xLastWakeTime;
   const TickType_t Period3 = 8;
 
@@ -175,12 +185,17 @@ void task3(void *parameters)
     if (freqT3 < 500)
     {
      // condition for too high or low which lets it to 0
-     freqT3 = 500;
+     task3f.freq2 = 500;
     }
 
-    if (freqT3 > 1000)
+    else if (freqT3 > 1000)
     {
-     freqT3 = 1000;
+     task3f.freq2 = 1000;
+    }
+
+    else 
+    {
+      task3f.freq2 = freqT3;
     }
     xSemaphoreGive(SMF);
   }
@@ -242,51 +257,72 @@ void task5(void *parameters)
   {
     vTaskDelayUntil( &xLastWakeTime, Period5 );
     xSemaphoreTake(SMF,portMAX_DELAY);
+
     x = map(freqT2, 333, 1000, 0, 99);
     y = map(freqT3, 500, 1000, 0, 99);
+
+    int X = constrain(x, 0, 99);
+    int Y = constrain(y, 0, 99);
+
     xSemaphoreGive(SMF);
-    Serial.print(x);
+    Serial.print(X);
     Serial.print(",");
-    Serial.println(y);
+    Serial.println(Y);
 
   }
 }
 
 void button(void *parameters)
 {
-  for(;;)
+  uint32_t level, state = 0, last = 0xFFFFFFFF;
+  uint32_t mask = 0x7FFFFFFF;
+  bool event;
+  
+  for (;;) 
   {
-    // Check for button
-    //sample the state of the button - is it pressed or not?
-    buttonState = digitalRead(buttonPin);
-
-    //filter out any noise by setting a time buffer
-    if ( (millis() - lastDebounceTime) > debounceDelay) {
-
-      //if the button has been pressed, lets toggle the LED from "off to on" or "on to off"
-      if ( (buttonState == HIGH) && (ledState < 0) ) 
-      {
-        //Send q
-        ledState = -ledState; //now the LED is on, we need to change the state
-        lastDebounceTime = millis(); //set the current time
+    level = !!digitalRead(buttonPin);
+    state = (state << 1) | level;
+    if ( (state & mask) == mask|| (state & mask) == 0 )
+       {
+        if ( level != last ) 
+        {
+          event = !!level;
+          if ( xQueueSendToBack(qh,&event,1) == pdPASS )
+            last = level;
+        }
       }
-      else if ( (buttonState == HIGH) && (ledState > 0) ) 
-      {
-        // Send q
-        ledState = -ledState; //now the LED is off, we need to change the state
-        lastDebounceTime = millis(); //set the current time
-      }
-
-    }
-  }
+  }  
+  taskYIELD();
 }
 
 void ledOut(void *parameters)
 {
-  for(;;)
+
+  
+  // LED light up
+  BaseType_t s;
+  bool event, ledState = false;
+  
+  // Light LED initially
+  digitalWrite(ledPin,ledState);
+
+  for (;;) 
   {
-    // LED light up
-  }
+    s = xQueueReceive(
+      qh,
+      &event,
+      portMAX_DELAY
+       );
+      assert(s == pdPASS);
+     if ( event ) 
+    {
+       // Button press:
+      // Toggle LED
+       ledState ^= true;
+       digitalWrite(ledPin,ledState);
+     }
+   }
+  
 }
 
 void loop()
@@ -296,6 +332,12 @@ void loop()
 
 void setup()
 {
+  //creating a que
+  // qh = xQueueCreate(5,sizeof(uint32_t));
+  delay(2000);          // Allow USB to connect
+  qh = xQueueCreate(40,sizeof(bool));
+  assert(qh);
+  //Semaphore initialisation
   SMF = xSemaphoreCreateMutex();
   //Pins setup
 
@@ -307,10 +349,12 @@ void setup()
   pinMode(inT2, INPUT);
   int freqT2;
   
+    
   //Task 3 initialization
   pinMode(inT3, INPUT);
   int freqT3;
-
+  
+  
   //Task 4 initialization
   pinMode(led, OUTPUT);
 
@@ -318,7 +362,9 @@ void setup()
 
   //Button/Led
   pinMode(ledPin, OUTPUT);
-  pinMode(buttonPin, INPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  
 
   // Create tasks
 
