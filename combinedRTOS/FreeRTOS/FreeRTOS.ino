@@ -147,13 +147,11 @@ void task2(void *parameters)
     if(xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
     {
 
-    stateT2 = digitalRead(inT2);                     // checks the current state of signal ( high or low )
-
-
       stateT2 = digitalRead(inT2);                     // checks the current state of signal ( high or low )              
       // checks the current state of signal ( high or low )
 
       highTimeT2 = pulseIn(inT2, !stateT2,3000);       // measures the half wave length of either high or low signal
+      freqT2 = 1/(highTimeT2 *2 * 0.000001); 
 
       if (freqT2 < 333)
       {
@@ -369,7 +367,6 @@ void setup()
   pinMode(inT2, INPUT);
   int freqT2;
   
-    
   //Task 3 initialization
   pinMode(inT3, INPUT);
   int freqT3;
