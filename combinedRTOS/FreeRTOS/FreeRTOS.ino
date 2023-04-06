@@ -1,5 +1,6 @@
 // IO pins setup
 //Queue handle
+
 static QueueHandle_t qh;
 
 // ===============Button/LED===============//
@@ -148,10 +149,11 @@ void task2(void *parameters)
 
     stateT2 = digitalRead(inT2);                     // checks the current state of signal ( high or low )
 
-    highTimeT2 = pulseIn(inT2, !stateT2,3000);       // measures the half wave length of either high or low signal
 
-    freqT2 = 1/(highTimeT2 *2 * 0.000001);           // calculating the frequency 
+      stateT2 = digitalRead(inT2);                     // checks the current state of signal ( high or low )              
+      // checks the current state of signal ( high or low )
 
+      highTimeT2 = pulseIn(inT2, !stateT2,3000);       // measures the half wave length of either high or low signal
 
       if (freqT2 < 333)
       {
@@ -171,7 +173,6 @@ void task2(void *parameters)
         xSemaphoreGive(SMF);
     }
     
-
   }
 }
 
@@ -191,12 +192,11 @@ void task3(void *parameters)
     if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
     {
 
-    stateT3 = digitalRead(inT3);                   // checks the current state of signal ( high or low )
+      stateT3 = digitalRead(inT3);                   // checks the current state of signal ( high or low )
 
-    highTimeT3 = pulseIn(inT3, !stateT3,2000);     // measures the half wavelength of either the high or low signal
+      highTimeT3 = pulseIn(inT3, !stateT3,2000);     // measures the half wavelength of either the high or low signal
 
-    freqT3 = 1/(highTimeT3 *2 * 0.000001);         // calculating the frequency 
-
+      freqT3 = 1/(highTimeT3 *2 * 0.000001);         // calculating the frequency
 
        if (freqT3 < 500)
     {
@@ -215,7 +215,6 @@ void task3(void *parameters)
     }
     xSemaphoreGive(SMF);
     }
-
   }
 }
 
@@ -230,7 +229,6 @@ void task4(void *parameters)
   for(;;)
   {
     vTaskDelayUntil( &xLastWakeTime, Period4 );
-
     if (count < 4)                        // adds the value to the next array as counter goes up
     {                                      // as long as the last array is not filled
       potVal[count] = analogRead(potPin);
@@ -274,14 +272,18 @@ void task5(void *parameters)
   for(;;)
   {
     vTaskDelayUntil( &xLastWakeTime, Period5 );
+
    if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
   {
     x = map(taskf.freq1, 333, 1000, 0, 99);
     y = map(taskf.freq2, 500, 1000, 0, 99);
-
-
     int X = constrain(x, 0, 99);
     int Y = constrain(y, 0, 99);
+    Serial.print(X);
+    Serial.print(",");
+    Serial.println(Y);
+
+  
 
 
     Serial.print(X);
@@ -289,7 +291,6 @@ void task5(void *parameters)
     Serial.println(Y);
      xSemaphoreGive(SMF);
   }
-
 
 
   }
@@ -303,6 +304,7 @@ void button(void *parameters)
   
   for (;;) 
   {
+
     level = !!digitalRead(buttonPin);
     state = (state << 1) | level;
     if ( (state & mask) == mask|| (state & mask) == 0 )
@@ -419,4 +421,6 @@ void setup()
 
   rc = xTaskCreatePinnedToCore(ledOut,"LED",4096,NULL,1,NULL,1);
   assert(rc == pdPASS);
+
+ 
 }
