@@ -142,9 +142,9 @@ void task2(void *parameters)
 
     vTaskDelayUntil( &xLastWakeTime, Period2 );
 
-    xSemaphoreTake(SMF,portMAX_DELAY);
-
-    stateT2 = digitalRead(inT2);                     // checks the current state of signal ( high or low )
+    if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
+    {
+          stateT2 = digitalRead(inT2);                     // checks the current state of signal ( high or low )
 
     highTimeT2 = pulseIn(inT2, !stateT2,3000);       // measures the half wave length of either high or low signal
 
@@ -168,6 +168,9 @@ void task2(void *parameters)
     
     xSemaphoreGive(SMF);
   }
+    }
+
+
 }
 
 void task3(void *parameters)
@@ -183,29 +186,34 @@ void task3(void *parameters)
   {
     vTaskDelayUntil( &xLastWakeTime, Period3 );
 
-    xSemaphoreTake(SMF,portMAX_DELAY);
-
-    stateT3 = digitalRead(inT3);                   // checks the current state of signal ( high or low )
-
-    highTimeT3 = pulseIn(inT3, !stateT3,2000);     // measures the half wavelength of either the high or low signal
-
-    freqT3 = 1/(highTimeT3 *2 * 0.000001);         // calculating the frequency 
-
-    if (freqT3 < 500)
+    
+    if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
     {
-     // condition for too high or low which lets it to 0
-     task3f.freq2 = 500;
-    }
+      stateT3 = digitalRead(inT3);                   // checks the current state of signal ( high or low )
 
-    else if (freqT3 > 1000)
-    {
-     task3f.freq2 = 1000;
-    }
+      highTimeT3 = pulseIn(inT3, !stateT3,2000);     // measures the half wavelength of either the high or low signal
 
-    else 
-    {
-      task3f.freq2 = freqT3;
-    }
+      freqT3 = 1/(highTimeT3 *2 * 0.000001);         // calculating the frequency 
+
+      if (freqT3 < 500)
+      {
+      // condition for too high or low which lets it to 0
+        task3f.freq2 = 500;
+      }
+
+      else if (freqT3 > 1000)
+      {
+        task3f.freq2 = 1000;
+      }
+
+      else 
+      {
+        task3f.freq2 = freqT3;
+      }
+  }
+
+
+    
     xSemaphoreGive(SMF);
   }
 }
@@ -265,18 +273,19 @@ void task5(void *parameters)
   for(;;)
   {
     vTaskDelayUntil( &xLastWakeTime, Period5 );
-    xSemaphoreTake(SMF,portMAX_DELAY);
-
+    if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
+  {
     x = map(freqT2, 333, 1000, 0, 99);
     y = map(freqT3, 500, 1000, 0, 99);
 
     int X = constrain(x, 0, 99);
     int Y = constrain(y, 0, 99);
-
+    Serial.print(X);
+    Serial.print(",");
+    Serial.println(Y);
+  }
     xSemaphoreGive(SMF);
-    // Serial.print(X);
-    // Serial.print(",");
-    // Serial.println(Y);
+    
 
   }
 }
@@ -287,15 +296,15 @@ void button(void *parameters)
   uint32_t mask = 0x7FFFFFFF;
   bool event;
 
-  TickType_t xLastWakeTime;
-  const TickType_t PeriodButton = 2;
+  // TickType_t xLastWakeTime;
+  // const TickType_t PeriodButton = 2;
 
-  // Initialise the xLastWakeTime variable with the current time.
-  xLastWakeTime = xTaskGetTickCount();
+  // // Initialise the xLastWakeTime variable with the current time.
+  // xLastWakeTime = xTaskGetTickCount();
   
   for (;;) 
   {
-    vTaskDelayUntil( &xLastWakeTime, PeriodButton );
+    // vTaskDelayUntil( &xLastWakeTime, PeriodButton );
     level = !!digitalRead(buttonPin);
     state = (state << 1) | level;
     if ( (state & mask) == mask|| (state & mask) == 0 )
@@ -314,11 +323,11 @@ void button(void *parameters)
 void ledOut(void *parameters)
 {
 
-  TickType_t xLastWakeTime;
-  const TickType_t PeriodLed = 2;
+  // TickType_t xLastWakeTime;
+  // const TickType_t PeriodLed = 2;
 
-  // Initialise the xLastWakeTime variable with the current time.
-  xLastWakeTime = xTaskGetTickCount();
+  // // Initialise the xLastWakeTime variable with the current time.
+  // xLastWakeTime = xTaskGetTickCount();
   // LED light up
   BaseType_t s;
   bool event, ledState = false;
@@ -328,7 +337,7 @@ void ledOut(void *parameters)
 
   for (;;) 
   {
-      vTaskDelayUntil( &xLastWakeTime, PeriodLed );
+      // vTaskDelayUntil( &xLastWakeTime, PeriodLed );
     s = xQueueReceive(
       qh,
       &event,
