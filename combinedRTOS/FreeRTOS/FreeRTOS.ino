@@ -80,6 +80,8 @@ void task1(void *parameters)
   TickType_t xLastWakeTime;
   const TickType_t Period1 = 4;
 
+  // unsigned stack_hwm = 0, temp;
+
   // Initialise the xLastWakeTime variable with the current time.
   xLastWakeTime = xTaskGetTickCount();
 
@@ -116,12 +118,19 @@ void task1(void *parameters)
       }
     }
   }
+  // temp = uxTaskGetStackHighWaterMark(NULL); 
+  //   if (!stack_hwm || temp < stack_hwm)
+  // {
+  //   stack_hwm = temp;
 
+  //   printf("%u",stack_hwm);
+  //   // Serial.println(stack_hwm);
+  // }
 }
 
 void task2(void *parameters)
 {
-  
+  Data task2f;
   TickType_t xLastWakeTime;
   const TickType_t Period2 = 20;
 
@@ -130,7 +139,7 @@ void task2(void *parameters)
 
   for(;;)
   {
-    Data task2f;
+
     vTaskDelayUntil( &xLastWakeTime, Period2 );
 
     xSemaphoreTake(SMF,portMAX_DELAY);
@@ -265,9 +274,9 @@ void task5(void *parameters)
     int Y = constrain(y, 0, 99);
 
     xSemaphoreGive(SMF);
-    Serial.print(X);
-    Serial.print(",");
-    Serial.println(Y);
+    // Serial.print(X);
+    // Serial.print(",");
+    // Serial.println(Y);
 
   }
 }
@@ -386,12 +395,12 @@ void setup()
     "Task1", // Task name
     1024, // Stack size
     NULL, // Param
-    1, // Priority
+    3, // Priority
     NULL, // Task Handle
     1
   );
   
-  rc = xTaskCreatePinnedToCore(task2,"Task2",1024,NULL,3,NULL,1);
+  rc = xTaskCreatePinnedToCore(task2,"Task2",1024,NULL,2,NULL,1);
   assert(rc == pdPASS);
 
   rc = xTaskCreatePinnedToCore(task3,"Task3",1024,NULL,2,NULL,1);
