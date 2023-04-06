@@ -1,5 +1,12 @@
 // IO pins setup
 //Queue handle
+
+// ===============Libraries===============//
+#include <Ticker.h>
+#include <B31DGMonitor.h>
+
+
+B31DGCyclicExecutiveMonitor monitor; // Creating object for monitor
 static QueueHandle_t qh;
 // ===============Button/LED===============//
 
@@ -88,6 +95,7 @@ void task1(void *parameters)
   for(;;)
   {
     vTaskDelayUntil( &xLastWakeTime, Period1 );
+    monitor.jobStarted(1);
 
     digitalWrite(outT1,HIGH);
     timeNow = micros();        // get the current time 
@@ -117,6 +125,7 @@ void task1(void *parameters)
         done = 1;    // done so that we can get out of this while loop
       }
     }
+    monitor.jobEnded(1);
   }
   // temp = uxTaskGetStackHighWaterMark(NULL); 
   //   if (!stack_hwm || temp < stack_hwm)
@@ -140,37 +149,34 @@ void task2(void *parameters)
   for(;;)
   {
 
-    vTaskDelayUntil( &xLastWakeTime, Period2 );
-
     if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
     {
-          stateT2 = digitalRead(inT2);                     // checks the current state of signal ( high or low )
+      stateT2 = digitalRead(inT2);                     // checks the current state of signal ( high or low )              
+      // checks the current state of signal ( high or low )
 
-    highTimeT2 = pulseIn(inT2, !stateT2,3000);       // measures the half wave length of either high or low signal
+      highTimeT2 = pulseIn(inT2, !stateT2,3000);       // measures the half wave length of either high or low signal
 
-    freqT2 = 1/(highTimeT2 *2 * 0.000001);           // calculating the frequency 
+      freqT2 = 1/(highTimeT2 *2 * 0.000001);           // calculating the frequency 
 
-    if (freqT2 < 333)
-    {
-      // condition for too high or low which lets it to 0
-       task2f.freq1 = 333;
+      if (freqT2 < 333)
+      {
+        // condition for too high or low which lets it to 0
+        task2f.freq1 = 333;
+      }
+
+      else if (freqT2 > 1000)
+      {
+        task2f.freq1 = 1000;
+      }
+
+      else
+      {
+        task2f.freq1 = freqT2;
+      }
+      monitor.jobEnded(2);
+      xSemaphoreGive(SMF);
     }
-
-    else if (freqT2 > 1000)
-    {
-      task2f.freq1 = 1000;
-    }
-
-    else
-    {
-      task2f.freq1 = freqT2;
-    }
-    
-    xSemaphoreGive(SMF);
   }
-    }
-
-
 }
 
 void task3(void *parameters)
@@ -184,9 +190,7 @@ void task3(void *parameters)
 
   for(;;)
   {
-    vTaskDelayUntil( &xLastWakeTime, Period3 );
-
-    
+    vTaskDelayUntil( &xLastWakeTime, Period3 );    
     if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
     {
       stateT3 = digitalRead(inT3);                   // checks the current state of signal ( high or low )
@@ -211,9 +215,6 @@ void task3(void *parameters)
         task3f.freq2 = freqT3;
       }
   }
-
-
-    
     xSemaphoreGive(SMF);
   }
 }
@@ -229,7 +230,7 @@ void task4(void *parameters)
   for(;;)
   {
     vTaskDelayUntil( &xLastWakeTime, Period4 );
-
+    monitor.jobStarted(4);
     if (count < 4)                        // adds the value to the next array as counter goes up
     {                                      // as long as the last array is not filled
       potVal[count] = analogRead(potPin);
@@ -260,6 +261,7 @@ void task4(void *parameters)
     }
     toVal = 0;                           // resets the value of total sum to 0
   }
+  monitor.jobEnded(4);
 }
 
 void task5(void *parameters)
@@ -285,7 +287,6 @@ void task5(void *parameters)
     Serial.println(Y);
   }
     xSemaphoreGive(SMF);
-    
 
   }
 }
@@ -426,4 +427,6 @@ void setup()
 
   rc = xTaskCreatePinnedToCore(ledOut,"LED",1024,NULL,1,NULL,1);
   assert(rc == pdPASS);
+
+  monitor.startMonitoring();    
 }
