@@ -283,12 +283,6 @@ void task5(void *parameters)
     Serial.print(",");
     Serial.println(Y);
 
-  
-
-
-    Serial.print(X);
-    Serial.print(",");
-    Serial.println(Y);
      xSemaphoreGive(SMF);
   }
 
@@ -399,7 +393,7 @@ void setup()
     "Task1", // Task name
     4096, // Stack size
     NULL, // Param
-    4, // Priority
+    1, // Priority
     NULL, // Task Handle
     1
   );
@@ -413,7 +407,7 @@ void setup()
   rc = xTaskCreatePinnedToCore(task4,"Task4",4096,NULL,1,NULL,1);
   assert(rc == pdPASS);
 
-  rc = xTaskCreatePinnedToCore(task5,"Task5",4096,NULL,1,NULL,1);
+  rc = xTaskCreatePinnedToCore(task5,"Task5",4096,NULL,2,NULL,1);
   assert(rc == pdPASS);
 
   rc = xTaskCreatePinnedToCore(button,"CheckButton",4096,NULL,1,NULL,1);
