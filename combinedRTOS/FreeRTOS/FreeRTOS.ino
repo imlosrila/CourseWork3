@@ -151,7 +151,8 @@ void task2(void *parameters)
       // checks the current state of signal ( high or low )
 
       highTimeT2 = pulseIn(inT2, !stateT2,3000);       // measures the half wave length of either high or low signal
-      freqT2 = 1/(highTimeT2 *2 * 0.000001); 
+      if (highTimeT2 == 0){ freqT2 = 300;}
+      else{freqT2 = 1/(highTimeT2 *2 * 0.000001);} 
 
       if (freqT2 < 333)
       {
@@ -183,38 +184,38 @@ void task3(void *parameters)
   // Initialise the xLastWakeTime variable with the current time.
   xLastWakeTime = xTaskGetTickCount();
 
-  for(;;)
-  {
-    vTaskDelayUntil( &xLastWakeTime, Period3 );
-
-    if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
+    for(;;)
     {
+      vTaskDelayUntil( &xLastWakeTime, Period3 );
 
-      stateT3 = digitalRead(inT3);                   // checks the current state of signal ( high or low )
+      if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
+      {
 
-      highTimeT3 = pulseIn(inT3, !stateT3,2000);     // measures the half wavelength of either the high or low signal
+        stateT3 = digitalRead(inT3);                   // checks the current state of signal ( high or low )
 
-      freqT3 = 1/(highTimeT3 *2 * 0.000001);         // calculating the frequency
+        highTimeT3 = pulseIn(inT3, !stateT3,2000);     // measures the half wavelength of either the high or low signal
+        if (highTimeT3 == 0){ freqT3 = 400;}
+        else {freqT3 = 1/(highTimeT3 *2 * 0.000001);}         // calculating the frequency
 
-       if (freqT3 < 500)
-    {
-     // condition for too high or low which lets it to 0
-     taskf.freq2 = 500;
-    }
+        if (freqT3 < 500)
+        {
+          // condition for too high or low which lets it to 0
+          taskf.freq2 = 500;
+        }
 
-    else if (freqT3 > 1000)
-    {
-     taskf.freq2 = 1000;
-    }
+      else if (freqT3 > 1000)
+      {
+      taskf.freq2 = 1000;
+      }
 
-    else 
-    {
-      taskf.freq2 = freqT3;
-    }
-    xSemaphoreGive(SMF);
+      else 
+      {
+        taskf.freq2 = freqT3;
+      }
+      xSemaphoreGive(SMF);
+      }
     }
   }
-}
 
 void task4(void *parameters)
 {
@@ -390,21 +391,21 @@ void setup()
     "Task1", // Task name
     4096, // Stack size
     NULL, // Param
-    1, // Priority
+    3, // Priority
     NULL, // Task Handle
     1
   );
   
-  rc = xTaskCreatePinnedToCore(task2,"Task2",4096,NULL,3,NULL,1);
+  rc = xTaskCreatePinnedToCore(task2,"Task2",4096,NULL,2,NULL,1);
   assert(rc == pdPASS);
 
-  rc = xTaskCreatePinnedToCore(task3,"Task3",4096,NULL,3,NULL,1);
+  rc = xTaskCreatePinnedToCore(task3,"Task3",4096,NULL,2,NULL,1);
   assert(rc == pdPASS);
 
   rc = xTaskCreatePinnedToCore(task4,"Task4",4096,NULL,1,NULL,1);
   assert(rc == pdPASS);
 
-  rc = xTaskCreatePinnedToCore(task5,"Task5",4096,NULL,2,NULL,1);
+  rc = xTaskCreatePinnedToCore(task5,"Task5",4096,NULL,1,NULL,1);
   assert(rc == pdPASS);
 
   rc = xTaskCreatePinnedToCore(button,"CheckButton",4096,NULL,1,NULL,1);
