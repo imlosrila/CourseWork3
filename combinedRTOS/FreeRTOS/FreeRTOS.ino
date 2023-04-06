@@ -141,15 +141,16 @@ void task2(void *parameters)
   for(;;)
   {
 
-    if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
-    {
+
       stateT2 = digitalRead(inT2);                     // checks the current state of signal ( high or low )              
       // checks the current state of signal ( high or low )
 
       highTimeT2 = pulseIn(inT2, !stateT2,3000);       // measures the half wave length of either high or low signal
 
       freqT2 = 1/(highTimeT2 *2 * 0.000001);           // calculating the frequency 
-
+      
+    if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
+    {
       if (freqT2 < 333)
       {
         // condition for too high or low which lets it to 0
@@ -182,14 +183,15 @@ void task3(void *parameters)
   for(;;)
   {
     vTaskDelayUntil( &xLastWakeTime, Period3 );    
-    if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
-    {
+
       stateT3 = digitalRead(inT3);                   // checks the current state of signal ( high or low )
 
       highTimeT3 = pulseIn(inT3, !stateT3,2000);     // measures the half wavelength of either the high or low signal
 
-      freqT3 = 1/(highTimeT3 *2 * 0.000001);         // calculating the frequency 
+      freqT3 = 1/(highTimeT3 *2 * 0.000001);         // calculating the frequency
 
+    if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
+    {
       if (freqT3 < 500)
       {
       // condition for too high or low which lets it to 0
@@ -206,7 +208,7 @@ void task3(void *parameters)
         task3f.freq2 = freqT3;
       }
       xSemaphoreGive(SMF);
-  }
+    }
     
   }
 }
@@ -269,14 +271,15 @@ void task5(void *parameters)
   {
     x = map(freqT2, 333, 1000, 0, 99);
     y = map(freqT3, 500, 1000, 0, 99);
-
+    xSemaphoreGive(SMF);
+  }
     int X = constrain(x, 0, 99);
     int Y = constrain(y, 0, 99);
     Serial.print(X);
     Serial.print(",");
     Serial.println(Y);
-    xSemaphoreGive(SMF);
-  }
+
+  
 
 
   }
