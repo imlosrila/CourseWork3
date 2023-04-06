@@ -2,6 +2,7 @@
 //Queue handle
 
 static QueueHandle_t qh;
+
 // ===============Button/LED===============//
 
 #define buttonPin 33
@@ -72,6 +73,7 @@ typedef struct
   int freq2;
 }Data;
 
+Data taskf;
 SemaphoreHandle_t SMF; //Semaphore handle
 
 
@@ -131,7 +133,7 @@ void task1(void *parameters)
 
 void task2(void *parameters)
 {
-  Data task2f;
+
   TickType_t xLastWakeTime;
   const TickType_t Period2 = 20;
 
@@ -141,39 +143,42 @@ void task2(void *parameters)
   for(;;)
   {
 
+    vTaskDelayUntil( &xLastWakeTime, Period2 );
+    if(xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
+    {
+
+    stateT2 = digitalRead(inT2);                     // checks the current state of signal ( high or low )
+
 
       stateT2 = digitalRead(inT2);                     // checks the current state of signal ( high or low )              
       // checks the current state of signal ( high or low )
 
       highTimeT2 = pulseIn(inT2, !stateT2,3000);       // measures the half wave length of either high or low signal
 
-      freqT2 = 1/(highTimeT2 *2 * 0.000001);           // calculating the frequency 
-      
-    if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
-    {
       if (freqT2 < 333)
       {
         // condition for too high or low which lets it to 0
-        task2f.freq1 = 333;
+        taskf.freq1 = 333;
       }
 
       else if (freqT2 > 1000)
       {
-        task2f.freq1 = 1000;
+      taskf.freq1 = 1000;
       }
 
       else
       {
-        task2f.freq1 = freqT2;
+        taskf.freq1 = freqT2;
       }
-      xSemaphoreGive(SMF);
+        xSemaphoreGive(SMF);
     }
+    
   }
 }
 
 void task3(void *parameters)
 {
-  Data task3f;
+  // Data task3f;
   TickType_t xLastWakeTime;
   const TickType_t Period3 = 8;
 
@@ -182,7 +187,10 @@ void task3(void *parameters)
 
   for(;;)
   {
-    vTaskDelayUntil( &xLastWakeTime, Period3 );    
+    vTaskDelayUntil( &xLastWakeTime, Period3 );
+
+    if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
+    {
 
       stateT3 = digitalRead(inT3);                   // checks the current state of signal ( high or low )
 
@@ -190,26 +198,23 @@ void task3(void *parameters)
 
       freqT3 = 1/(highTimeT3 *2 * 0.000001);         // calculating the frequency
 
-    if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
+       if (freqT3 < 500)
     {
-      if (freqT3 < 500)
-      {
-      // condition for too high or low which lets it to 0
-        task3f.freq2 = 500;
-      }
-
-      else if (freqT3 > 1000)
-      {
-        task3f.freq2 = 1000;
-      }
-
-      else 
-      {
-        task3f.freq2 = freqT3;
-      }
-      xSemaphoreGive(SMF);
+     // condition for too high or low which lets it to 0
+     taskf.freq2 = 500;
     }
-    
+
+    else if (freqT3 > 1000)
+    {
+     taskf.freq2 = 1000;
+    }
+
+    else 
+    {
+      taskf.freq2 = freqT3;
+    }
+    xSemaphoreGive(SMF);
+    }
   }
 }
 
@@ -267,12 +272,11 @@ void task5(void *parameters)
   for(;;)
   {
     vTaskDelayUntil( &xLastWakeTime, Period5 );
-    if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
+
+   if (xSemaphoreTake(SMF,portMAX_DELAY) == pdTRUE)
   {
-    x = map(freqT2, 333, 1000, 0, 99);
-    y = map(freqT3, 500, 1000, 0, 99);
-    xSemaphoreGive(SMF);
-  }
+    x = map(taskf.freq1, 333, 1000, 0, 99);
+    y = map(taskf.freq2, 500, 1000, 0, 99);
     int X = constrain(x, 0, 99);
     int Y = constrain(y, 0, 99);
     Serial.print(X);
@@ -280,6 +284,13 @@ void task5(void *parameters)
     Serial.println(Y);
 
   
+
+
+    Serial.print(X);
+    Serial.print(",");
+    Serial.println(Y);
+     xSemaphoreGive(SMF);
+  }
 
 
   }
@@ -290,16 +301,10 @@ void button(void *parameters)
   uint32_t level, state = 0, last = 0xFFFFFFFF;
   uint32_t mask = 0x7FFFFFFF;
   bool event;
-
-  // TickType_t xLastWakeTime;
-  // const TickType_t PeriodButton = 2;
-
-  // // Initialise the xLastWakeTime variable with the current time.
-  // xLastWakeTime = xTaskGetTickCount();
   
   for (;;) 
   {
-    // vTaskDelayUntil( &xLastWakeTime, PeriodButton );
+
     level = !!digitalRead(buttonPin);
     state = (state << 1) | level;
     if ( (state & mask) == mask|| (state & mask) == 0 )
@@ -318,11 +323,6 @@ void button(void *parameters)
 void ledOut(void *parameters)
 {
 
-  // TickType_t xLastWakeTime;
-  // const TickType_t PeriodLed = 2;
-
-  // // Initialise the xLastWakeTime variable with the current time.
-  // xLastWakeTime = xTaskGetTickCount();
   // LED light up
   BaseType_t s;
   bool event, ledState = false;
@@ -332,7 +332,7 @@ void ledOut(void *parameters)
 
   for (;;) 
   {
-      // vTaskDelayUntil( &xLastWakeTime, PeriodLed );
+
     s = xQueueReceive(
       qh,
       &event,
@@ -397,29 +397,29 @@ void setup()
   xTaskCreatePinnedToCore(
     task1, // Function name
     "Task1", // Task name
-    1024, // Stack size
+    4096, // Stack size
     NULL, // Param
-    3, // Priority
+    4, // Priority
     NULL, // Task Handle
     1
   );
   
-  rc = xTaskCreatePinnedToCore(task2,"Task2",1024,NULL,2,NULL,1);
+  rc = xTaskCreatePinnedToCore(task2,"Task2",4096,NULL,3,NULL,1);
   assert(rc == pdPASS);
 
-  rc = xTaskCreatePinnedToCore(task3,"Task3",1024,NULL,2,NULL,1);
+  rc = xTaskCreatePinnedToCore(task3,"Task3",4096,NULL,3,NULL,1);
   assert(rc == pdPASS);
 
-  rc = xTaskCreatePinnedToCore(task4,"Task4",1024,NULL,1,NULL,1);
+  rc = xTaskCreatePinnedToCore(task4,"Task4",4096,NULL,1,NULL,1);
   assert(rc == pdPASS);
 
-  rc = xTaskCreatePinnedToCore(task5,"Task5",1024,NULL,1,NULL,1);
+  rc = xTaskCreatePinnedToCore(task5,"Task5",4096,NULL,1,NULL,1);
   assert(rc == pdPASS);
 
-  rc = xTaskCreatePinnedToCore(button,"CheckButton",1024,NULL,1,NULL,1);
+  rc = xTaskCreatePinnedToCore(button,"CheckButton",4096,NULL,1,NULL,1);
   assert(rc == pdPASS);
 
-  rc = xTaskCreatePinnedToCore(ledOut,"LED",1024,NULL,1,NULL,1);
+  rc = xTaskCreatePinnedToCore(ledOut,"LED",4096,NULL,1,NULL,1);
   assert(rc == pdPASS);
 
  
