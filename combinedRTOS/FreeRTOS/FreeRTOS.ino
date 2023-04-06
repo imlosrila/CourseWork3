@@ -273,9 +273,9 @@ void task5(void *parameters)
       y = map(taskf.freq2, 500, 1000, 0, 99);
       int X = constrain(x, 0, 99);
       int Y = constrain(y, 0, 99);
-      // Serial.print(X);
-      // Serial.print(",");
-      // Serial.println(Y);
+      Serial.print(X);
+      Serial.print(",");
+      Serial.println(Y);
 
       xSemaphoreGive(SMF);
     }
@@ -375,25 +375,25 @@ void setup()
   xTaskCreatePinnedToCore(
       task1,   // Function name
       "Task1", // Task name
-      4096,    // Stack size
+      1024,    // Stack size
       NULL,    // Param
       3,       // Priority
       NULL,    // Task Handle
       1);
 
-  rc = xTaskCreatePinnedToCore(task2, "Task2", 4096, NULL, 2, NULL, 1);
+  rc = xTaskCreatePinnedToCore(task2, "Task2", 1024, NULL, 2, NULL, 1);
   assert(rc == pdPASS);
 
-  rc = xTaskCreatePinnedToCore(task3, "Task3", 4096, NULL, 2, NULL, 1);
+  rc = xTaskCreatePinnedToCore(task3, "Task3", 1024, NULL, 2, NULL, 1);
   assert(rc == pdPASS);
 
-  rc = xTaskCreatePinnedToCore(task4, "Task4", 4096, NULL, 1, NULL, 1);
+  rc = xTaskCreatePinnedToCore(task4, "Task4", 2048, NULL, 1, NULL, 1);
   assert(rc == pdPASS);
 
-  rc = xTaskCreatePinnedToCore(task5, "Task5", 4096, NULL, 1, NULL, 1);
+  rc = xTaskCreatePinnedToCore(task5, "Task5", 1024, NULL, 1, NULL, 1);
   assert(rc == pdPASS);
 
-  rc = xTaskCreatePinnedToCore(button, "CheckButton", 4096, NULL, 1, NULL, 1);
+  rc = xTaskCreatePinnedToCore(button, "CheckButton", 1024, NULL, 1, NULL, 1);
   assert(rc == pdPASS);
 
   rc = xTaskCreatePinnedToCore(ledOut, "LED", 4096, NULL, 1, NULL, 1);
