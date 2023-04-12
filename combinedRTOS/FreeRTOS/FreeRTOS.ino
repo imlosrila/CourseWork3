@@ -269,10 +269,13 @@ void task5(void *parameters)
 
     if (xSemaphoreTake(SMF, portMAX_DELAY) == pdTRUE)
     {
+      // mapping the frequency value to percentage
       x = map(taskf.freq1, 333, 1000, 0, 99);
       y = map(taskf.freq2, 500, 1000, 0, 99);
+      // constraining values making sure if its bounded between 0 to 99
       int X = constrain(x, 0, 99);
       int Y = constrain(y, 0, 99);
+      // Printing the percentage values
       Serial.print(X);
       Serial.print(",");
       Serial.println(Y);
@@ -282,6 +285,8 @@ void task5(void *parameters)
   }
 }
 
+// Push buttton and LED code was obtained from
+// Warren Gay's book, FreeRTOS for ESP32 (pg. 60 -61)
 void button(void *parameters)
 {
   uint32_t level, state = 0, last = 0xFFFFFFFF;
